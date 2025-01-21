@@ -1,0 +1,4 @@
+FROM oryd/oathkeeper
+ENV OATHKEEPER_API_URL=http://api:4455/
+ENV CREDENTIALS_ISSUER_ID_TOKEN_HS256_SECRET=changemechangemechangemechangemedo
+CMD [ "serve","proxy","--disable-telemetry"]

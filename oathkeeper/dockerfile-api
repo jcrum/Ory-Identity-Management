@@ -1,0 +1,4 @@
+FROM oryd/oathkeeper
+ENV DATABASE_URL=memory
+ENV CREDENTIALS_ISSUER_ID_TOKEN_HS256_SECRET=changemechangemechangemechangemedo
+CMD [ "serve","api","--disable-telemetry"]
