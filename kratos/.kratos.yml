@@ -61,11 +61,11 @@ selfservice:
     registration:
       lifespan: 10m
       ui_url: http://127.0.0.1:4455/registration
-      # after:
-      #   password:
-      #     hooks:
-      #       - hook: session
-      #       - hook: show_verification_ui
+      after:
+        password:
+          hooks:
+            - hook: session
+            - hook: show_verification_ui
 
 log:
   level: debug

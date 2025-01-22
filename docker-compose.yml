@@ -5,7 +5,7 @@ version: '3.7'
 
 services:
   hydra-migrate:
-    image: oryd/hydra:v2.0.3
+    image: oryd/hydra:latest
     environment:
       - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
     volumes:
@@ -21,7 +21,7 @@ services:
       - intranet
 
   hydra:
-    image: oryd/hydra:v2.0.3
+    image: oryd/hydra:latest
     depends_on:
       - hydra-migrate
     ports:
@@ -63,19 +63,25 @@ services:
       - KRATOS_PUBLIC_URL=http://kratos:4433/
       - KRATOS_ADMIN_URL=http://kratos:4434/
       - SECURITY_MODE=standalone
-      - KRATOS_BROWSER_URL=http://127.0.0.1:3000/
+      #- KRATOS_BROWSER_URL=http://127.0.0.1:4433/
+      # - http://127.0.0.1:4455/
       - COOKIE_SECRET=THISISASUPERSECRET1
       - CSRF_COOKIE_NAME=_HOST-localhost-x-csrf-token
       - CSRF_COOKIE_SECRET=THISISTHE1SECRET
+      # - PORT=4455
+      - PORT=4435
+      - KRATOS_BROWSER_URL=http://127.0.0.1:4455/.ory/kratos/public
+      - JWKS_URL=http://oathkeeper:4456/.well-known/jwks.json
+      - SECURITY_MODE=jwks
     ports:
-      - "3000:3000"
+      - "4435:4435"
     networks:
       - intranet
     volumes:
       - /tmp/ui-node/logs:/root/.npm/_logs
 
   kratos-migrate:
-    image: oryd/kratos:v0.11.1
+    image: oryd/kratos:latest
     environment:
       - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
     volumes:
@@ -97,13 +103,14 @@ services:
   kratos:
     depends_on:
       - kratos-migrate
-    image: oryd/kratos:v0.11.1
+    image: oryd/kratos:latest
     ports:
       - "4433:4433" # public
       - "4434:4434" # admin
     restart: unless-stopped
     environment:
       - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+      #- SERVE_PUBLIC_BASE_URL=http://127.0.0.1:4455/.ory/kratos/public/
     command:
       serve -c /etc/config/kratos/.kratos.yml --dev
     volumes:
@@ -130,30 +137,34 @@ services:
       - type: bind
         source: ./keto
         target: /home/ory
-  oathkeeper-api:
-    build:
-      context: ./oathkeeper
-      dockerfile: dockerfile-api
+
+  oathkeeper:
+    image: oryd/oathkeeper:latest
+    depends_on:
+      - kratos
     ports:
-    - "4455:4455"
-  oathkeeper-proxy:
-    build:
-      context: ./oathkeeper
-      dockerfile: dockerfile-proxy
+      - 4455:4455
+      - 4456:4456
+    command:
+      serve proxy -c "/etc/config/oathkeeper/oathkeeper.yml"
+    environment:
+      - LOG_LEVEL=debug
+    restart: on-failure
+    networks:
+      - intranet
+    volumes:
+      - ./oathkeeper/:/etc/config/oathkeeper
+
+
+
+
+  mailslurper:
+    image: oryd/mailslurper:latest-smtps
     ports:
-    - "4456:4456"   
-
-
-
-# Sending emails is not part of this demo, so this is commented out:
-#
-#  mailslurper:
-#    image: oryd/mailslurper:latest-smtps
-#    ports:
-#      - "4436:4436"
-#      - "4437:4437"
-#    networks:
-#      - intranet
+      - "4436:4436"
+      - "4437:4437"
+    networks:
+      - intranet
 
 networks:
   intranet:
