@@ -19,7 +19,6 @@
     handler: allow
   mutators:
     - handler: noop
-
 -
   id: "ory:kratos-selfservice-ui-node:anonymous"
   upstream:

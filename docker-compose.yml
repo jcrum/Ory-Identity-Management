@@ -4,10 +4,30 @@
 version: '3.7'
 
 services:
+
+  postgres-hydra:
+    image: postgres:latest
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=hydra
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=hydra
+    networks:
+      - intranet
+
+
+
+
+
+
+
   hydra-migrate:
     image: oryd/hydra:latest
+    links:
+      - postgres-hydra:postgres-hydra
     environment:
-      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
+      - DSN=postgres://hydra:secret@postgres-hydra:5432/hydra?sslmode=disable&max_conns=20&max_idle_conns=4
     volumes:
       -
         type: volume
@@ -24,13 +44,16 @@ services:
     image: oryd/hydra:latest
     depends_on:
       - hydra-migrate
+    links:
+      - postgres-hydra:postgres-hydra
+
     ports:
       - "4444:4444" # Public port
       - "4445:4445" # Admin port
       - "5555:5555" # Port for hydra token user
     command:
       # serve all --dangerous-force-http
-      serve all -c /etc/config/hydra/.hydra.yml --dev
+      serve all -c /etc/config/hydra/hydra.yml --dev
     restart: on-failure # TODO figure out why we need this (incorporate health check into hydra migrate command?)
     environment:
       - LOG_LEAK_SENSITIVE_VALUES=true
@@ -42,7 +65,7 @@ services:
       - SECRETS_SYSTEM=youReallyNeedToChangeThis
       - OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES=public,pairwise
       - OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT=youReallyNeedToChangeThis
-      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
+      - DSN=postgres://hydra:secret@postgres-hydra:5432/hydra?sslmode=disable&max_conns=20&max_idle_conns=4
     networks:
       - intranet
     volumes:
@@ -80,10 +103,30 @@ services:
     volumes:
       - /tmp/ui-node/logs:/root/.npm/_logs
 
+
+
+
+
+
+  postgres-kratos:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=kratos
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=kratos
+    networks:
+      - intranet
+
+
+
   kratos-migrate:
     image: oryd/kratos:latest
+    links:
+      - postgres-kratos:postgres-kratos
     environment:
-      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
+      - DSN=postgres://kratos:secret@postgres-kratos:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
     volumes:
       -
         type: volume
@@ -95,7 +138,7 @@ services:
         source: ./kratos
         target: /etc/config/kratos
     command:
-      -c /etc/config/kratos/.kratos.yml migrate sql -e --yes
+      -c /etc/config/kratos/kratos.yml migrate sql -e --yes
     restart: on-failure
     networks:
       - intranet
@@ -108,11 +151,13 @@ services:
       - "4433:4433" # public
       - "4434:4434" # admin
     restart: unless-stopped
+    links:
+      - postgres-kratos:postgres-kratos
     environment:
-      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+      - DSN=postgres://kratos:secret@postgres-kratos:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
       #- SERVE_PUBLIC_BASE_URL=http://127.0.0.1:4455/.ory/kratos/public/
     command:
-      serve -c /etc/config/kratos/.kratos.yml --dev
+      serve -c /etc/config/kratos/kratos.yml --dev
     volumes:
       -
         type: volume
