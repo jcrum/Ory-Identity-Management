@@ -70,8 +70,15 @@ authenticators:
 authorizers:
   allow:
     enabled: true
+  deny:
+    enabled: true
 
 mutators:
+  header:
+    enabled: true
+    config:
+      headers:
+        X-User: "{{ print .Subject }}"
   noop:
     enabled: true
 
@@ -79,7 +86,7 @@ mutators:
     enabled: true
     config:
       issuer_url: http://127.0.0.1:4455/
-      jwks_url: file:///etc/config/oathkeeper/id_token.jwks.json
+      jwks_url: file:///etc/config/oathkeeper/jwks.json
       claims: |
         {
           "session": {{ .Extra | toJson }}
