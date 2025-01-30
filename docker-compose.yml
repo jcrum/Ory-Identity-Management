@@ -1,7 +1,13 @@
 # This docker-compose file sets up ORY Kratos, ORY Hydra, and this app in a network and configures
 # in such a way that ORY Kratos is the Login Provider for ORY Hydra.
 
-version: '3.7'
+x-kong-config: &kong-env
+  KONG_DATABASE: postgres
+  KONG_PG_DATABASE: kong
+  KONG_PG_HOST: postgres-kong
+  KONG_PG_USER: kong
+  KONG_PG_PASSWORD: kong
+
 
 services:
 
@@ -11,23 +17,16 @@ services:
     depends_on:
       - postgres-kong
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_DATABASE: kong
-      KONG_PG_HOST: postgres-kong
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kong
+      <<: *kong-env 
     networks:
       - intranet
     restart: on-failure
 
+
   kong:
     image: "kong:latest"
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_DATABASE: kong
-      KONG_PG_HOST: postgres-kong
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kong
+      <<: *kong-env 
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_PROXY_LISTEN: "${KONG_PROXY_LISTEN:-0.0.0.0:8000}"
@@ -56,6 +55,7 @@ services:
       - ./kong:/opt/kong
     security_opt:
       - no-new-privileges
+
 
   postgres-kong:
     image: postgres:latest
@@ -173,7 +173,6 @@ services:
       - intranet
 
 
-
   kratos-migrate:
     image: oryd/kratos:latest
     links:
@@ -243,9 +242,6 @@ services:
     volumes:
       - ./oathkeeper/:/etc/config/oathkeeper
 
-
-
-
   mailslurper:
     image: oryd/mailslurper:latest-smtps
     ports:
@@ -267,3 +263,5 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
+
+
