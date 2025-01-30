@@ -2,6 +2,7 @@
 
 if [[ $# -lt 2 ]]; then
   echo "Usage: $0 <service_name> <upstream>"
+  exit 1
 fi
 
 service_name="$1"

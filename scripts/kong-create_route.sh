@@ -2,6 +2,7 @@
 
 if [[ $# -lt 2 ]]; then
   echo "Usage: $0 <service_name> <route_name> <route_path>"
+  exit 1
 fi
 
 service_name="$1"
