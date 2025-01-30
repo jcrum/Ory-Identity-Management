@@ -1,5 +1,7 @@
--
-  id: "ory:kratos:public"
+# Public endpoint for kratos
+#   Authentication, authorization, and mutations is bypassed 
+
+- id: "ory:kratos:public"
   upstream:
     preserve_host: true
     url: "http://kratos:4433"
@@ -13,14 +15,18 @@
       - DELETE
       - PATCH
   authenticators:
-    -
-      handler: noop
+    - handler: noop
   authorizer:
     handler: allow
   mutators:
     - handler: noop
--
-  id: "ory:kratos-selfservice-ui-node:anonymous"
+
+
+# Self-Service UI
+# Checks to see if the authorization header is set
+#   If it is not the request is subject to anonymous flows
+
+- id: "ory:kratos-selfservice-ui-node:anonymous"
   upstream:
     preserve_host: true
     url: "http://kratos-selfservice-ui-node:4435"
@@ -29,16 +35,16 @@
     methods:
       - GET
   authenticators:
-    -
-      handler: anonymous
+    - handler: anonymous
   authorizer:
     handler: allow
   mutators:
-    -
-      handler: noop
+    - handler: noop
 
--
-  id: "ory:kratos-selfservice-ui-node:protected"
+
+# Self-Service UI protected mode
+#   Uses cookies for session authorization
+- id: "ory:kratos-selfservice-ui-node:protected"
   upstream:
     preserve_host: true
     url: "http://kratos-selfservice-ui-node:4435"
@@ -47,8 +53,7 @@
     methods:
       - GET
   authenticators:
-    -
-      handler: cookie_session
+    - handler: cookie_session
   authorizer:
     handler: allow
   mutators:
@@ -57,3 +62,27 @@
     - handler: redirect
       config:
         to: http://127.0.0.1:4455/login
+
+
+# Application API
+#  UNDER DEVELOPMENT 
+- id: "api:protected"
+  upstream:
+    preserve_host: true
+    url: "http://host.docker.internal:9292"
+    strip_path: /api
+  match:
+    url: "http://oathkeeper:4455/api"
+    
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: noop
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
