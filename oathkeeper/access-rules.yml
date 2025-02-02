@@ -72,8 +72,7 @@
     url: "http://host.docker.internal:9292"
     strip_path: /api
   match:
-    url: "http://oathkeeper:4455/api"
-    
+    url: "http://<{127.0.0.1:4455,oathkeeper:4455,localhost:8000}>/api<**>"
     methods:
       - GET
       - POST
@@ -81,72 +80,13 @@
       - DELETE
       - PATCH
   authenticators:
-    - handler: noop
+    - handler: bearer_token 
   authorizer:
     handler: allow
   mutators:
-    - handler: noop
+    - handler: noop 
 
 
 
 
-# Test Configurations
-- id: allow-anonymous-with-header-mutator
-  upstream:
-    url: https://httpbin.org/anything/header
-  match:
-    url: http://127.0.0.1:4455/anything/header
-    methods:
-      - GET
-  authenticators:
-    - handler: anonymous
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: header
-      config:
-        headers:
-          X-User: "{{ print .Subject }}"
 
-- id: deny-anonymous
-  upstream:
-    url: https://httpbin.org/anything/deny
-  match:
-    url: http://127.0.0.1:4455/anything/deny
-    methods:
-      - GET
-  authenticators:
-    - handler: anonymous
-  authorizer:
-    handler: deny
-  mutators:
-    - handler: noop
-  errors:
-    - handler: json
-      config:
-        when:
-          - request:
-              header:
-                accept:
-                  - application/json
-    - handler: redirect
-      config:
-        when:
-          - request:
-              header:
-                accept:
-                  - text/*
-
-- id: allow-anonymous-with-id-token-mutator
-  upstream:
-    url: https://httpbin.org/anything/id_token
-  match:
-    url: http://127.0.0.1:4455/anything/id_token
-    methods:
-      - GET
-  authenticators:
-    - handler: anonymous
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: id_token

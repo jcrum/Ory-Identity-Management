@@ -1,6 +1,7 @@
 log:
   level: debug
   format: json
+  leak_sensitive_values: true
 
 serve:
   proxy:
@@ -17,6 +18,7 @@ serve:
       allowed_headers:
         - Authorization
         - Content-Type
+        - X-Session-Token
       exposed_headers:
         - Content-Type
       allow_credentials: true
@@ -60,25 +62,31 @@ authenticators:
     config:
       check_session_url: http://kratos:4433/sessions/whoami
       preserve_path: true
+      preserve_query: true
       extra_from: "@this"
       subject_from: "identity.id"
       only:
         - ory_kratos_session
+  
+  bearer_token:
+    enabled: true
+    config:
+      check_session_url: http://kratos:4433/sessions/whoami
+      preserve_path: true
+      extra_from: "@this"
+      subject_from: "identity.id"
+
+  
+
+      
   noop:
     enabled: true
 
 authorizers:
   allow:
     enabled: true
-  deny:
-    enabled: true
 
 mutators:
-  header:
-    enabled: true
-    config:
-      headers:
-        X-User: "{{ print .Subject }}"
   noop:
     enabled: true
 
